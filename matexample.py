@@ -2,12 +2,10 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.widgets import Slider, Button
 import matplotlib.animation as animation
+from matplotlib.animation import FuncAnimation
 
 import numpy as np
 import math as ma
-
-def position(t, initial_position, initial_velocity, frecuency):
-    print("hola")
 
 # definiendo la funcion de la posicion
 def position_plot(t, initial_position, initial_velocity, frecuency):
@@ -65,13 +63,8 @@ funciones para la animacion
 def position(t, frecuency):
     return initial_position*np.cos(frecuency*t)+initial_velocity/frecuency*np.sin(frecuency*t)
 
-def animation(t):
-    x = position(t, )
-    masa.set
-
-
 # definiendo la variable dependiente y su dominio
-t = np.linspace(0, 10, 200)
+t = np.linspace(0, 10, 400)
 
 # valores inciales de las constantes
 initial_position = 0.5
@@ -118,6 +111,11 @@ axcolor = 'lightgoldenrodyellow'
 '''
 animacion
 '''
+# Animation controls
+is_manual = False # True if user has taken control of the animation
+interval = 100 # ms, time between animation frames
+loop_len = 1.0 # seconds per loop
+scale = interval / 1000 / loop_len
 # ani = animation.FuncAnimation(fig, run, position_plot(t,2,1,6))
 
 #slider posicion
@@ -153,6 +151,12 @@ feq_slider = Slider(
     orientation="vertical"
 )
 
+def animation(t, initial_position, initial_velocity, frecuency):
+    pos = initial_position*np.cos(frecuency*t)+initial_velocity/frecuency*np.sin(frecuency*t)
+    masa.set_ydata(pos)
+    x, y = spring(5,16,5,pos,0.3,50)
+    resorte.set_data(x, y)
+
 #funcion que actualiza los datos y por consiguiente la gráfica
 def update_graphs(val):
     #Graficar en esos ejes
@@ -162,16 +166,28 @@ def update_graphs(val):
     x, y = spring(5,16,5,pos_slider.val,0.3,50)
     resorte.set_data(x, y)
     #grafico de la masa
-    masa.set_data(5,pos_slider.val)
+    masa.set_ydata(pos_slider.val)
     format_axes(fig)
     fig.canvas.draw_idle()
     return pos, vel, spring, masa,
+
+def animate_button(self):
+    initial_position = pos_slider.val
+    initial_velocity = vel_slider.val
+    initial_frequency = feq_slider.val
+    a = FuncAnimation(fig, animation , fargs=(initial_position, initial_velocity, initial_frequency), frames=t,interval=50, repeat=True)
+    fig.canvas.draw()
 
 
 #registro de los cambios en los sliders
 pos_slider.on_changed(update_graphs)
 vel_slider.on_changed(update_graphs)
 feq_slider.on_changed(update_graphs)
+
+#animation button
+axnext = fig.add_axes([0.785, 0.02,0.1, 0.075])
+bnext = Button(axnext, 'Run Simulations!')
+bnext.on_clicked(animate_button)
 
 fig.suptitle("Oscilador Armónico Simple")
 format_axes(fig)
