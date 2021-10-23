@@ -1,9 +1,13 @@
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.widgets import Slider, Button
+import matplotlib.animation as animation
 
 import numpy as np
 import math as ma
+
+def position(t, initial_position, initial_velocity, frecuency):
+    print("hola")
 
 # definiendo la funcion de la posicion
 def position_plot(t, initial_position, initial_velocity, frecuency):
@@ -19,18 +23,19 @@ def recta(largo ,alto):
 
 #funcion que retorna un resorte dinamico
 def spring(xo,yo,xf,yf,width,points):
-    cicle=(-1,0,1)
+    cicle=(-1,1)
     j=0
-    x=[xo]
-    y=[yo]
-    spr=[(xo,yo)]
-    for i in range(points):
-        if j>=3:
-            j=0
-        spr.append((int(xo+width*cicle[j]),int(yo+(i+1)/points*(yf-yo))))
-        x.append(xo+width*cicle[j])
-        y.append(yo+(i+1)/points*(yf-yo))
-        j+=1
+    i=1
+    total_points=points+4
+    x=np.array([xo,xo])
+    y=np.array([yo,yo+i/total_points*(yf-yo)])
+    while i<total_points:
+        if total_points-i<=2:
+            x=np.append(x,xf)
+        else:
+            x=np.append(x,xo+(i%2*2-1)*width)
+        y=np.append(y,yo+i/total_points*(yf-yo))
+        i+=1
     return x, y
 
 # formateo de los ejes para que todo se vea mas bonito
@@ -39,7 +44,7 @@ def format_axes(fig):
         #ax.text(0.5, 0.5, "ax%d" % (i+1), va="center", ha="center")
         graph.tick_params(labelbottom=False, labelleft=False)
         graph.set_xlim([0, 10])
-        graph.set_ylim([0, 14])
+        graph.set_ylim([-10, 17])
         if ax==pos_ax or ax==vel_ax:
             ax.tick_params(labelbottom=False, labelleft=True)
             #para ponerle la mallita
@@ -54,11 +59,22 @@ def format_axes(fig):
                 ax.set_ylim([-7, 7])
 
 
+'''
+funciones para la animacion
+'''
+def position(t, frecuency):
+    return initial_position*np.cos(frecuency*t)+initial_velocity/frecuency*np.sin(frecuency*t)
+
+def animation(t):
+    x = position(t, )
+    masa.set
+
+
 # definiendo la variable dependiente y su dominio
 t = np.linspace(0, 10, 200)
 
 # valores inciales de las constantes
-initial_position = 2
+initial_position = 0.5
 initial_velocity = 1
 initial_frequency = 6
 
@@ -75,42 +91,34 @@ pos_ax = fig.add_subplot(gs[0, 1:])
 vel_ax = fig.add_subplot(gs[1, 1:])
 
 
-# ingreso de las constantes, por ahora mediante la terminal
-# k = float(input("Ingrese el valor de la constante de elasticidad: "))
-# m = float(input("Ingrese el valor de la masa: "))
-#o talvez es mejor solo manejar la constante w
-#w=float(input("Ingrese el valor de la frecuencia: "))
-
-
-# yo=float(input("Ingrese la posición inicial: "))
-# vo=float(input("Ingrese la velocidad inicial: "))
-
-#w = (k/m)**(0.5)
-
 '''
 Grafico del resorte con la masa
 '''
 #grafico de recta
 ancho_de_soporte=np.linspace(2,8,3)
-graph.plot(ancho_de_soporte, recta(np.ones(len(ancho_de_soporte)),12), color='black')
+recta, = graph.plot(ancho_de_soporte, recta(np.ones(len(ancho_de_soporte)),16), color='black')
 
 #grafico de resorte
-x, y = spring(5,12,5,7,0.5,26)
-graph.plot(x,y, color='black')
+x, y = spring(5,16,5,initial_position,0.3,50)
+resorte, = graph.plot(x,y, color='black')
 
 #grafico de la masa
-masa = plt.Circle((5,7),0.3, color='black')
-graph.add_patch(masa)
+masa, = graph.plot(5,initial_position,marker="o", markersize=15, color='black')
 
 '''
 grafico de la posicion vs la velocidad
 '''
-pos_ax.plot(t, position_plot(t, initial_position, initial_velocity, initial_frequency))
-vel_ax.plot(t, velocity_plot(t, initial_position, initial_velocity, initial_frequency))
+pos, = pos_ax.plot(t, position_plot(t, initial_position, initial_velocity, initial_frequency))
+vel, = vel_ax.plot(t, velocity_plot(t, initial_position, initial_velocity, initial_frequency))
 
 # adjust the main plot to make room for the sliders
 plt.subplots_adjust(left=0.01, right=0.99, bottom=0.03, top=0.94, wspace=0.4)
 axcolor = 'lightgoldenrodyellow'
+
+'''
+animacion
+'''
+# ani = animation.FuncAnimation(fig, run, position_plot(t,2,1,6))
 
 #slider posicion
 axpos = plt.axes([0.54, 0.05, 0.012, 0.85], facecolor=axcolor)
@@ -147,12 +155,17 @@ feq_slider = Slider(
 
 #funcion que actualiza los datos y por consiguiente la gráfica
 def update_graphs(val):
-    pos_ax.clear()
-    vel_ax.clear()
-    pos_ax.plot(t, position_plot(t, pos_slider.val, vel_slider.val, feq_slider.val))
-    vel_ax.plot(t, velocity_plot(t, pos_slider.val, vel_slider.val, feq_slider.val))
+    #Graficar en esos ejes
+    pos.set_data(t, position_plot(t, pos_slider.val, vel_slider.val, feq_slider.val))
+    vel.set_data(t, velocity_plot(t, pos_slider.val, vel_slider.val, feq_slider.val))
+    #grafico de resorte
+    x, y = spring(5,16,5,pos_slider.val,0.3,50)
+    resorte.set_data(x, y)
+    #grafico de la masa
+    masa.set_data(5,pos_slider.val)
     format_axes(fig)
     fig.canvas.draw_idle()
+    return pos, vel, spring, masa,
 
 
 #registro de los cambios en los sliders

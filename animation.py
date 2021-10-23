@@ -10,7 +10,7 @@ class PauseAnimation:
         x = np.linspace(-0.1, 0.1, 1000)
 
         # Start with a normal distribution
-        self.n0 = (1.0 / ((4 * np.pi * 2e-4 * 0.1) ** 0.5)5
+        self.n0 = (1.0 / ((4 * np.pi * 2e-4 * 0.1) ** 0.5)
                    * np.exp(-x ** 2 / (4 * 2e-4 * 0.1)))
         self.p, = ax.plot(x, self.n0)
 
