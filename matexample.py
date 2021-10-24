@@ -85,7 +85,7 @@ vel_ax = fig.add_subplot(gs[1, 1:])
 
 
 '''
-Grafico del resorte con la masa
+Grafico del resorte con la masa y descripciones en los graficos
 '''
 #grafico de recta
 ancho_de_soporte=np.linspace(2,8,3)
@@ -97,6 +97,8 @@ resorte, = graph.plot(x,y, color='black')
 
 #grafico de la masa
 masa, = graph.plot(5,initial_position,marker="o", markersize=15, color='black')
+masa_pos, = pos_ax.plot(0, initial_position,marker="o", markersize=6, color='red')
+masa_vel, = vel_ax.plot(0, initial_velocity,marker="o", markersize=6, color='red')
 
 '''
 grafico de la posicion vs la velocidad
@@ -153,7 +155,10 @@ feq_slider = Slider(
 
 def animation(t, initial_position, initial_velocity, frecuency):
     pos = initial_position*np.cos(frecuency*t)+initial_velocity/frecuency*np.sin(frecuency*t)
+    vel = -initial_position*frecuency*np.sin(frecuency*t)+initial_velocity*np.cos(frecuency*t)
     masa.set_ydata(pos)
+    masa_pos.set_data(t,pos)
+    masa_vel.set_data(t,vel)
     x, y = spring(5,16,5,pos,0.3,50)
     resorte.set_data(x, y)
 
@@ -167,6 +172,8 @@ def update_graphs(val):
     resorte.set_data(x, y)
     #grafico de la masa
     masa.set_ydata(pos_slider.val)
+    masa_pos.set_data(0, pos_slider.val)
+    masa_vel.set_data(0, vel_slider.val)
     format_axes(fig)
     fig.canvas.draw_idle()
     return pos, vel, spring, masa,
@@ -185,8 +192,8 @@ vel_slider.on_changed(update_graphs)
 feq_slider.on_changed(update_graphs)
 
 #animation button
-axnext = fig.add_axes([0.785, 0.02,0.1, 0.075])
-bnext = Button(axnext, 'Run Simulations!')
+axnext = fig.add_axes([0.03, 0.04,0.1, 0.075])
+bnext = Button(axnext, 'Correr Simulacion!')
 bnext.on_clicked(animate_button)
 
 fig.suptitle("Oscilador Armónico Simple")
