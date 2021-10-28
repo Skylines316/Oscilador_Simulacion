@@ -9,6 +9,10 @@ import pymunk
 import numpy as np
 import math as ma
 
+#* Limpiar el codigo
+#? agregar un setter a la spring para cambiar su longitud
+#! revisar errores
+
 #funcion recta de soporte del resorte
 def recta(largo ,alto):
     return largo*alto
@@ -43,11 +47,11 @@ def format_axes(fig):
             ax.grid(True)
             if ax==vel_ax:
                 # ax.suptitle("Velocidad")
-                ax.set_xlim([0, 10])
+                ax.set_xlim([0, 20])
                 ax.set_ylim([-23, 23])
             else:#para poner los limites
                 # ax.suptitle("Posicion")
-                ax.set_xlim([0, 10])
+                ax.set_xlim([0, 20])
                 ax.set_ylim([-7, 7])
 
 
@@ -60,7 +64,9 @@ def position(t, frecuency):
 # valores inciales de las constantes
 initial_position = 2
 initial_velocity = 0
-initial_frequency = 6
+initial_stiffness = 20
+initial_mass = 5
+initial_damping = 0
 
 # definiendo la variable dependiente y su dominio
 time = np.array([0])
@@ -69,12 +75,13 @@ time = np.array([0])
 space = pymunk.Space()
 # space.gravity = 0, -9.81
 b0 = space.static_body
-body = pymunk.Body(mass=5, moment=1)
+b0.position = (5, 16)
+body = pymunk.Body(mass=initial_mass, moment=1)
 body.position = (5, initial_position)
 body.velocity = (0, initial_velocity)
 FPS = 10               # Funciona diferente, a menos FPS mas rapida es la animacion
 
-joint = pymunk.constraints.DampedSpring(b0, body, (5,16), (0, 0), 16, 20, 0)
+joint = pymunk.constraints.DampedSpring(b0, body, (0,0), (0, 0), 16, initial_stiffness, 0)
 space.add(body, joint)
 
 # Creando la figura
@@ -129,7 +136,7 @@ scale = interval / 1000 / loop_len
 # ani = animation.FuncAnimation(fig, run, position_plot(t,2,1,6))
 
 #slider posicion
-axpos = plt.axes([0.54, 0.05, 0.012, 0.85], facecolor=axcolor)
+axpos = plt.axes([0.54, 0.52, 0.012, 0.4], facecolor=axcolor)
 pos_slider = Slider(
     ax=axpos,
     label='Pos [cm]',
@@ -140,7 +147,7 @@ pos_slider = Slider(
 )
 
 #slider velocidad
-axvel = plt.axes([0.49, 0.05, 0.012, 0.85], facecolor=axcolor)
+axvel = plt.axes([0.49, 0.52, 0.012, 0.4], facecolor=axcolor)
 vel_slider = Slider(
     ax=axvel,
     label="Vel [cm/s]",
@@ -150,16 +157,39 @@ vel_slider = Slider(
     orientation="vertical"
 )
 
-#slider frecuencia
-axfeq = plt.axes([0.44, 0.05, 0.012, 0.85], facecolor=axcolor)
-feq_slider = Slider(
-    ax=axfeq,
-    label="Freq [$s^{-1}$]",
+#slider stiffness
+axstiff = plt.axes([0.44, 0.52, 0.012, 0.4], facecolor=axcolor)
+stiff_slider = Slider(
+    ax=axstiff,
+    label="Stiff [$s^{-1}$]",
     valmin=1,
-    valmax=10,
-    valinit=initial_frequency,
+    valmax=30,
+    valinit=initial_stiffness,
     orientation="vertical"
 )
+
+#slider masa
+axmas = plt.axes([0.44, 0.04, 0.012, 0.4], facecolor=axcolor)
+mass_slider = Slider(
+    ax=axmas,
+    label="mas[kg]",
+    valmin=1,
+    valmax=10,
+    valinit=initial_mass,
+    orientation="vertical"
+)
+
+#slider damping
+axdamp = plt.axes([0.49, 0.04, 0.012, 0.4], facecolor=axcolor)
+damp_slider = Slider(
+    ax=axdamp,
+    label="dump[$s^{-1}$]",
+    valmin=0,
+    valmax=10,
+    valinit=initial_damping,
+    orientation="vertical"
+)
+
 
 def animation(t):
     global time, pos_graf, vel_graf
@@ -189,8 +219,12 @@ def update_graphs(val):
     masa_vel.set_ydata(vel_slider.val)
     body.position = (5, pos_slider.val)
     body.velocity = (0, vel_slider.val)
+    body.mass = mass_slider.val
+    joint._set_damping(damp_slider.val)
+    joint._set_stiffness(stiff_slider.val)
     format_axes(fig)
     fig.canvas.draw_idle()
+    restart(val)
     return pos, vel, spring, masa, 
 
 anim_running = False
@@ -216,6 +250,7 @@ def init_anim():
     time = np.array([0])
     body.position = (5, pos_slider.val)
     body.velocity = (0, vel_slider.val)
+    body.mass = pos_slider.val
     pos_graf = np.array([pos_slider.val])
     vel_graf = np.array([vel_slider.val])
     masa_pos, = pos_ax.plot(0, pos_slider.val,marker="o", markersize=6, color='red')
@@ -225,7 +260,10 @@ def init_anim():
 #registro de los cambios en los sliders
 pos_slider.on_changed(update_graphs)
 vel_slider.on_changed(update_graphs)
-feq_slider.on_changed(update_graphs)
+stiff_slider.on_changed(update_graphs)
+mass_slider.on_changed(update_graphs)
+damp_slider.on_changed(update_graphs)
+
 
 #play pause button
 axplay = fig.add_axes([0.03, 0.04,0.05, 0.03])
@@ -235,7 +273,7 @@ bnplay = Button(axplay, 'Play / Pause')
 axres = fig.add_axes([0.1, 0.04,0.03, 0.03])
 bnres = Button(axres, 'Restart')
 
-a = FuncAnimation(fig, animation , frames=np.arange(0,10,1/FPS),init_func=init_anim, interval=1, repeat=True)
+a = FuncAnimation(fig, animation , frames=np.arange(0,20,1/FPS),init_func=init_anim, interval=1, repeat=True)
 bnplay.on_clicked(onClick)
 bnres.on_clicked(restart)
 
