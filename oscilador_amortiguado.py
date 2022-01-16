@@ -62,7 +62,7 @@ def position(t, frecuency):
     return initial_position*np.cos(frecuency*t)+initial_velocity/frecuency*np.sin(frecuency*t)
 
 # valores inciales de las constantes
-initial_position = 2
+initial_position = 1
 initial_velocity = 0
 initial_stiffness = 20
 initial_mass = 5
@@ -81,7 +81,7 @@ body.position = (5, initial_position)
 body.velocity = (0, initial_velocity)
 FPS = 10               # Funciona diferente, a menos FPS mas rapida es la animacion
 
-joint = pymunk.constraints.DampedSpring(b0, body, (0,0), (0, 0), 16, initial_stiffness, 0)
+joint = pymunk.constraints.DampedSpring(b0, body, (0,0), (0, 0), 16, initial_stiffness, initial_damping)
 space.add(body, joint)
 
 # Creando la figura
@@ -250,7 +250,7 @@ def init_anim():
     time = np.array([0])
     body.position = (5, pos_slider.val)
     body.velocity = (0, vel_slider.val)
-    body.mass = pos_slider.val
+    body.mass = mass_slider.val
     pos_graf = np.array([pos_slider.val])
     vel_graf = np.array([vel_slider.val])
     masa_pos, = pos_ax.plot(0, pos_slider.val,marker="o", markersize=6, color='red')
